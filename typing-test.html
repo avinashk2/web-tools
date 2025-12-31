@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Typing Speed Test - Web Tools</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .typing-area {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+            border: 3px solid var(--border);
+        }
+
+        .sample-text {
+            font-size: 1.3rem;
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+            user-select: none;
+            letter-spacing: 0.5px;
+        }
+
+        .sample-text span {
+            position: relative;
+        }
+
+        .char-correct {
+            color: var(--success);
+        }
+
+        .char-incorrect {
+            color: var(--danger);
+            background: #ffe0e0;
+        }
+
+        .char-current {
+            border-left: 2px solid var(--primary);
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        #input-field {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.2rem;
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            font-family: inherit;
+        }
+
+        #input-field:disabled {
+            background: #e9ecef;
+            cursor: not-allowed;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .stat-box {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .timer {
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+            color: var(--primary);
+            margin: 1rem 0;
+        }
+
+        .difficulty-selector {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin: 1.5rem 0;
+        }
+
+        .difficulty-btn {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid var(--border);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .difficulty-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .difficulty-btn:hover {
+            border-color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">Web Tools</a>
+            <div class="nav-links">
+                <a href="diff-checker.html">Diff Checker</a>
+                <a href="password-generator.html">Password Gen</a>
+                <a href="typing-test.html" style="color: var(--primary);">Typing Test</a>
+                <a href="markdown-preview.html">Markdown</a>
+                <a href="movie-database.html">Movies/Books</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>⌨️ Typing Speed Test</h1>
+            <p>Test your typing speed and accuracy</p>
+        </div>
+
+        <div class="card">
+            <div class="difficulty-selector">
+                <button class="difficulty-btn active" data-difficulty="easy">Easy</button>
+                <button class="difficulty-btn" data-difficulty="medium">Medium</button>
+                <button class="difficulty-btn" data-difficulty="hard">Hard</button>
+            </div>
+
+            <div class="timer" id="timer">60</div>
+
+            <div class="typing-area">
+                <div class="sample-text" id="sample-text"></div>
+                <input
+                    type="text"
+                    id="input-field"
+                    placeholder="Click here and start typing when ready..."
+                    autocomplete="off"
+                    autocorrect="off"
+                    autocapitalize="off"
+                    spellcheck="false"
+                >
+            </div>
+
+            <div class="text-center">
+                <button id="restart-btn" class="btn btn-primary">Restart Test</button>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-value" id="wpm">0</div>
+                <div class="stat-label">WPM</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="accuracy">100</div>
+                <div class="stat-label">Accuracy %</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="errors">0</div>
+                <div class="stat-label">Errors</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="chars-typed">0</div>
+                <div class="stat-label">Characters</div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Built with HTML, CSS, and JavaScript | Hosted on GitHub Pages</p>
+    </footer>
+
+    <script>
+        const texts = {
+            easy: [
+                "The quick brown fox jumps over the lazy dog.",
+                "A journey of a thousand miles begins with a single step.",
+                "Practice makes perfect and patience is a virtue.",
+                "Time flies when you are having fun with friends."
+            ],
+            medium: [
+                "Technology is best when it brings people together and makes their lives easier.",
+                "The only way to do great work is to love what you do and keep learning.",
+                "Innovation distinguishes between a leader and a follower in any field.",
+                "Success is not final, failure is not fatal: it is the courage to continue that counts."
+            ],
+            hard: [
+                "Artificial intelligence and machine learning are revolutionizing industries across the globe with unprecedented efficiency.",
+                "The intersection of quantum computing and cryptography presents both opportunities and challenges for cybersecurity experts.",
+                "Distributed ledger technology fundamentally transforms how we conceptualize trust and verification in digital transactions.",
+                "Neuroplasticity demonstrates the brain's remarkable ability to reorganize itself by forming new neural connections throughout life."
+            ]
+        };
+
+        let currentDifficulty = 'easy';
+        let currentText = '';
+        let currentIndex = 0;
+        let startTime = null;
+        let timerInterval = null;
+        let timeLeft = 60;
+        let errors = 0;
+        let totalChars = 0;
+        let isTestActive = false;
+
+        const sampleTextEl = document.getElementById('sample-text');
+        const inputField = document.getElementById('input-field');
+        const timerEl = document.getElementById('timer');
+        const wpmEl = document.getElementById('wpm');
+        const accuracyEl = document.getElementById('accuracy');
+        const errorsEl = document.getElementById('errors');
+        const charsTypedEl = document.getElementById('chars-typed');
+        const restartBtn = document.getElementById('restart-btn');
+        const difficultyBtns = document.querySelectorAll('.difficulty-btn');
+
+        function getRandomText(difficulty) {
+            const textArray = texts[difficulty];
+            return textArray[Math.floor(Math.random() * textArray.length)];
+        }
+
+        function initTest() {
+            currentText = getRandomText(currentDifficulty);
+            currentIndex = 0;
+            errors = 0;
+            totalChars = 0;
+            timeLeft = 60;
+            isTestActive = false;
+            startTime = null;
+
+            sampleTextEl.innerHTML = currentText.split('').map((char, idx) =>
+                `<span id="char-${idx}">${char}</span>`
+            ).join('');
+
+            inputField.value = '';
+            inputField.disabled = false;
+            inputField.focus();
+
+            updateStats();
+            timerEl.textContent = timeLeft;
+
+            if (timerInterval) clearInterval(timerInterval);
+        }
+
+        function startTest() {
+            if (isTestActive) return;
+            isTestActive = true;
+            startTime = Date.now();
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerEl.textContent = timeLeft;
+
+                if (timeLeft <= 0) {
+                    endTest();
+                }
+            }, 1000);
+        }
+
+        function endTest() {
+            isTestActive = false;
+            inputField.disabled = true;
+            clearInterval(timerInterval);
+            calculateWPM();
+        }
+
+        function calculateWPM() {
+            const timeElapsed = (60 - timeLeft) / 60; // in minutes
+            const wordsTyped = totalChars / 5; // standard: 5 chars = 1 word
+            const wpm = timeElapsed > 0 ? Math.round(wordsTyped / timeElapsed) : 0;
+            wpmEl.textContent = wpm;
+        }
+
+        function updateStats() {
+            const accuracy = totalChars > 0 ? Math.round(((totalChars - errors) / totalChars) * 100) : 100;
+            accuracyEl.textContent = accuracy;
+            errorsEl.textContent = errors;
+            charsTypedEl.textContent = totalChars;
+
+            if (isTestActive) {
+                calculateWPM();
+            }
+        }
+
+        inputField.addEventListener('input', (e) => {
+            if (!isTestActive) startTest();
+
+            const typed = e.target.value;
+            const currentChar = currentText[currentIndex];
+
+            if (typed === currentText.substring(0, currentIndex + 1)) {
+                // Correct so far
+                const charEl = document.getElementById(`char-${currentIndex}`);
+                if (charEl) {
+                    charEl.classList.remove('char-incorrect', 'char-current');
+                    charEl.classList.add('char-correct');
+                }
+
+                currentIndex++;
+                totalChars++;
+
+                if (currentIndex < currentText.length) {
+                    const nextChar = document.getElementById(`char-${currentIndex}`);
+                    if (nextChar) nextChar.classList.add('char-current');
+                } else {
+                    // Text completed
+                    endTest();
+                    alert('Test completed! Check your stats.');
+                }
+            } else {
+                // Incorrect
+                const charEl = document.getElementById(`char-${currentIndex}`);
+                if (charEl && !charEl.classList.contains('char-incorrect')) {
+                    charEl.classList.add('char-incorrect');
+                    errors++;
+                    totalChars++;
+                }
+            }
+
+            updateStats();
+        });
+
+        restartBtn.addEventListener('click', initTest);
+
+        difficultyBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                difficultyBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentDifficulty = btn.dataset.difficulty;
+                initTest();
+            });
+        });
+
+        // Initialize on load
+        initTest();
+    </script>
+</body>
+</html>

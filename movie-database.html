@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie/Book Database - Web Tools</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .search-container {
+            max-width: 800px;
+            margin: 0 auto 2rem;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .search-box input {
+            flex: 1;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 2rem;
+            border: 2px solid var(--border);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+
+        .result-image {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            background: var(--bg-light);
+        }
+
+        .result-content {
+            padding: 1.5rem;
+        }
+
+        .result-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .result-info {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-rating {
+            display: inline-block;
+            background: var(--success);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .modal.active {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 800px;
+            width: 100%;
+            margin: 2rem auto;
+            position: relative;
+        }
+
+        .modal-header {
+            padding: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--danger);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 2rem;
+        }
+
+        .detail-image {
+            width: 100%;
+            border-radius: 8px;
+        }
+
+        .detail-info p {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-light);
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-light);
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 768px) {
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">Web Tools</a>
+            <div class="nav-links">
+                <a href="diff-checker.html">Diff Checker</a>
+                <a href="password-generator.html">Password Gen</a>
+                <a href="typing-test.html">Typing Test</a>
+                <a href="markdown-preview.html">Markdown</a>
+                <a href="movie-database.html" style="color: var(--primary);">Movies/Books</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>🎬 Movie & Book Database</h1>
+            <p>Search for movies and books with detailed information</p>
+        </div>
+
+        <div class="tab-buttons">
+            <button class="tab-btn active" data-tab="movies">Movies</button>
+            <button class="tab-btn" data-tab="books">Books</button>
+        </div>
+
+        <div class="search-container">
+            <div class="card">
+                <div class="search-box">
+                    <input
+                        type="text"
+                        id="search-input"
+                        placeholder="Search for movies or books..."
+                    >
+                    <button id="search-btn" class="btn btn-primary">Search</button>
+                </div>
+                <p style="color: var(--text-light); font-size: 0.9rem; text-align: center;">
+                    Note: Movies use OMDB API (limited free tier). Books use Google Books API.
+                </p>
+            </div>
+        </div>
+
+        <div id="results-container"></div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">×</button>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Built with HTML, CSS, and JavaScript | Hosted on GitHub Pages</p>
+    </footer>
+
+    <script>
+        const OMDB_API_KEY = '2c3e3f94'; // Free tier API key
+        const GOOGLE_BOOKS_API = 'https://www.googleapis.com/books/v1/volumes';
+
+        let currentTab = 'movies';
+        const searchInput = document.getElementById('search-input');
+        const searchBtn = document.getElementById('search-btn');
+        const resultsContainer = document.getElementById('results-container');
+        const modal = document.getElementById('modal');
+        const modalBody = document.getElementById('modal-body');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentTab = btn.dataset.tab;
+                resultsContainer.innerHTML = '';
+                searchInput.placeholder = `Search for ${currentTab}...`;
+            });
+        });
+
+        async function searchMovies(query) {
+            resultsContainer.innerHTML = '<div class="loading">Searching movies...</div>';
+
+            try {
+                const response = await fetch(`https://www.omdbapi.com/?apikey=${OMDB_API_KEY}&s=${encodeURIComponent(query)}`);
+                const data = await response.json();
+
+                if (data.Response === 'True') {
+                    displayMovies(data.Search);
+                } else {
+                    resultsContainer.innerHTML = `<div class="no-results">No movies found. Try a different search.</div>`;
+                }
+            } catch (error) {
+                resultsContainer.innerHTML = `<div class="no-results">Error loading movies. Please try again.</div>`;
+                console.error('Error:', error);
+            }
+        }
+
+        async function searchBooks(query) {
+            resultsContainer.innerHTML = '<div class="loading">Searching books...</div>';
+
+            try {
+                const response = await fetch(`${GOOGLE_BOOKS_API}?q=${encodeURIComponent(query)}&maxResults=20`);
+                const data = await response.json();
+
+                if (data.items && data.items.length > 0) {
+                    displayBooks(data.items);
+                } else {
+                    resultsContainer.innerHTML = `<div class="no-results">No books found. Try a different search.</div>`;
+                }
+            } catch (error) {
+                resultsContainer.innerHTML = `<div class="no-results">Error loading books. Please try again.</div>`;
+                console.error('Error:', error);
+            }
+        }
+
+        function displayMovies(movies) {
+            const html = `
+                <div class="results-grid">
+                    ${movies.map(movie => `
+                        <div class="result-card" onclick="showMovieDetails('${movie.imdbID}')">
+                            <img src="${movie.Poster !== 'N/A' ? movie.Poster : 'https://via.placeholder.com/280x400?text=No+Image'}"
+                                 alt="${movie.Title}"
+                                 class="result-image">
+                            <div class="result-content">
+                                <div class="result-title">${movie.Title}</div>
+                                <div class="result-info">${movie.Year} • ${movie.Type}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            resultsContainer.innerHTML = html;
+        }
+
+        function displayBooks(books) {
+            const html = `
+                <div class="results-grid">
+                    ${books.map(book => {
+                        const info = book.volumeInfo;
+                        const thumbnail = info.imageLinks?.thumbnail || 'https://via.placeholder.com/280x400?text=No+Image';
+                        const rating = info.averageRating ? `⭐ ${info.averageRating}` : 'No rating';
+                        return `
+                            <div class="result-card" onclick='showBookDetails(${JSON.stringify(book).replace(/'/g, "&apos;")})'>
+                                <img src="${thumbnail}" alt="${info.title}" class="result-image">
+                                <div class="result-content">
+                                    <div class="result-title">${info.title}</div>
+                                    <div class="result-info">${info.authors?.join(', ') || 'Unknown Author'}</div>
+                                    <span class="result-rating">${rating}</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+            resultsContainer.innerHTML = html;
+        }
+
+        async function showMovieDetails(imdbID) {
+            try {
+                const response = await fetch(`https://www.omdbapi.com/?apikey=${OMDB_API_KEY}&i=${imdbID}&plot=full`);
+                const movie = await response.json();
+
+                modalBody.innerHTML = `
+                    <div class="modal-header">
+                        <h2>${movie.Title} (${movie.Year})</h2>
+                    </div>
+                    <div class="modal-body">
+                        <div class="detail-grid">
+                            <img src="${movie.Poster !== 'N/A' ? movie.Poster : 'https://via.placeholder.com/200x300?text=No+Image'}"
+                                 alt="${movie.Title}"
+                                 class="detail-image">
+                            <div class="detail-info">
+                                <p><strong>Rating:</strong> ${movie.imdbRating}/10 (${movie.imdbVotes} votes)</p>
+                                <p><strong>Genre:</strong> ${movie.Genre}</p>
+                                <p><strong>Director:</strong> ${movie.Director}</p>
+                                <p><strong>Actors:</strong> ${movie.Actors}</p>
+                                <p><strong>Plot:</strong> ${movie.Plot}</p>
+                                <p><strong>Runtime:</strong> ${movie.Runtime}</p>
+                                <p><strong>Released:</strong> ${movie.Released}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                modal.classList.add('active');
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function showBookDetails(book) {
+            const info = book.volumeInfo;
+            const thumbnail = info.imageLinks?.thumbnail || 'https://via.placeholder.com/200x300?text=No+Image';
+
+            modalBody.innerHTML = `
+                <div class="modal-header">
+                    <h2>${info.title}</h2>
+                </div>
+                <div class="modal-body">
+                    <div class="detail-grid">
+                        <img src="${thumbnail}" alt="${info.title}" class="detail-image">
+                        <div class="detail-info">
+                            <p><strong>Author(s):</strong> ${info.authors?.join(', ') || 'Unknown'}</p>
+                            ${info.averageRating ? `<p><strong>Rating:</strong> ⭐ ${info.averageRating}/5 (${info.ratingsCount || 0} ratings)</p>` : ''}
+                            <p><strong>Published:</strong> ${info.publishedDate || 'Unknown'}</p>
+                            <p><strong>Publisher:</strong> ${info.publisher || 'Unknown'}</p>
+                            ${info.pageCount ? `<p><strong>Pages:</strong> ${info.pageCount}</p>` : ''}
+                            ${info.description ? `<p><strong>Description:</strong> ${info.description}</p>` : ''}
+                            ${info.previewLink ? `<p><a href="${info.previewLink}" target="_blank" class="btn btn-primary">Preview on Google Books</a></p>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+
+        function performSearch() {
+            const query = searchInput.value.trim();
+            if (!query) {
+                alert('Please enter a search term');
+                return;
+            }
+
+            if (currentTab === 'movies') {
+                searchMovies(query);
+            } else {
+                searchBooks(query);
+            }
+        }
+
+        searchBtn.addEventListener('click', performSearch);
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Load popular movies on start
+        searchMovies('marvel');
+    </script>
+</body>
+</html>

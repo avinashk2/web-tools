@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Preview - Web Tools</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <style>
+        .editor-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 2rem 0;
+            height: 600px;
+        }
+
+        .editor-panel {
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .panel-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 1rem;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-content {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        #markdown-input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+        }
+
+        #preview-output {
+            line-height: 1.8;
+        }
+
+        #preview-output h1,
+        #preview-output h2,
+        #preview-output h3,
+        #preview-output h4,
+        #preview-output h5,
+        #preview-output h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        #preview-output h1 {
+            font-size: 2.5rem;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+
+        #preview-output h2 {
+            font-size: 2rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+
+        #preview-output h3 { font-size: 1.5rem; }
+        #preview-output h4 { font-size: 1.25rem; }
+
+        #preview-output p {
+            margin-bottom: 1rem;
+        }
+
+        #preview-output code {
+            background: #f6f8fa;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        #preview-output pre {
+            background: #1e1e1e;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        #preview-output pre code {
+            background: none;
+            padding: 0;
+            color: #d4d4d4;
+        }
+
+        #preview-output blockquote {
+            border-left: 4px solid var(--primary);
+            padding-left: 1rem;
+            margin: 1rem 0;
+            color: var(--text-light);
+            font-style: italic;
+        }
+
+        #preview-output ul,
+        #preview-output ol {
+            margin: 1rem 0;
+            padding-left: 2rem;
+        }
+
+        #preview-output li {
+            margin: 0.5rem 0;
+        }
+
+        #preview-output table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        #preview-output table th,
+        #preview-output table td {
+            border: 1px solid var(--border);
+            padding: 0.75rem;
+            text-align: left;
+        }
+
+        #preview-output table th {
+            background: var(--bg-light);
+            font-weight: 600;
+        }
+
+        #preview-output a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        #preview-output a:hover {
+            text-decoration: underline;
+        }
+
+        #preview-output img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-btn {
+            padding: 0.5rem;
+            background: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+
+        .toolbar-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        @media (max-width: 968px) {
+            .editor-container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+
+            .editor-panel {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">Web Tools</a>
+            <div class="nav-links">
+                <a href="diff-checker.html">Diff Checker</a>
+                <a href="password-generator.html">Password Gen</a>
+                <a href="typing-test.html">Typing Test</a>
+                <a href="markdown-preview.html" style="color: var(--primary);">Markdown</a>
+                <a href="movie-database.html">Movies/Books</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>📄 Markdown Preview</h1>
+            <p>Live markdown editor with instant preview</p>
+        </div>
+
+        <div class="text-center mb-3">
+            <button id="export-html-btn" class="btn btn-primary">Export HTML</button>
+            <button id="clear-btn" class="btn btn-secondary">Clear</button>
+            <button id="sample-btn" class="btn btn-secondary">Load Sample</button>
+        </div>
+
+        <div class="editor-container">
+            <div class="editor-panel">
+                <div class="panel-header">
+                    <span>Markdown Editor</span>
+                    <div class="toolbar">
+                        <button class="toolbar-btn" onclick="insertMarkdown('**bold**')" title="Bold">B</button>
+                        <button class="toolbar-btn" onclick="insertMarkdown('*italic*')" title="Italic">I</button>
+                        <button class="toolbar-btn" onclick="insertMarkdown('\n```\ncode\n```\n')" title="Code">&lt;/&gt;</button>
+                        <button class="toolbar-btn" onclick="insertMarkdown('[link](url)')" title="Link">🔗</button>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <textarea id="markdown-input" placeholder="Type your markdown here..."></textarea>
+                </div>
+            </div>
+
+            <div class="editor-panel">
+                <div class="panel-header">
+                    <span>Preview</span>
+                </div>
+                <div class="panel-content" id="preview-output">
+                    <p style="color: var(--text-light);">Start typing markdown to see preview...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Built with HTML, CSS, and JavaScript | Hosted on GitHub Pages</p>
+    </footer>
+
+    <script>
+        const markdownInput = document.getElementById('markdown-input');
+        const previewOutput = document.getElementById('preview-output');
+        const exportBtn = document.getElementById('export-html-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const sampleBtn = document.getElementById('sample-btn');
+
+        // Configure marked
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, { language: lang }).value;
+                }
+                return hljs.highlightAuto(code).value;
+            }
+        });
+
+        function updatePreview() {
+            const markdown = markdownInput.value;
+            if (!markdown.trim()) {
+                previewOutput.innerHTML = '<p style="color: var(--text-light);">Start typing markdown to see preview...</p>';
+                return;
+            }
+            previewOutput.innerHTML = marked.parse(markdown);
+        }
+
+        function insertMarkdown(syntax) {
+            const start = markdownInput.selectionStart;
+            const end = markdownInput.selectionEnd;
+            const text = markdownInput.value;
+            const before = text.substring(0, start);
+            const selected = text.substring(start, end);
+            const after = text.substring(end);
+
+            let newText = before + syntax + after;
+            if (selected) {
+                newText = before + syntax.replace(/\*\*bold\*\*|\*italic\*|code|link|url/, selected) + after;
+            }
+
+            markdownInput.value = newText;
+            markdownInput.focus();
+            updatePreview();
+        }
+
+        function exportHTML() {
+            const html = previewOutput.innerHTML;
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'markdown-export.html';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function loadSample() {
+            const sample = `# Markdown Preview
+## Welcome to the Markdown Editor
+
+This is a **live preview** of your markdown content.
+
+### Features
+- Real-time preview
+- GitHub-flavored markdown
+- Syntax highlighting for code blocks
+- Export to HTML
+
+### Code Example
+\`\`\`javascript
+function greet(name) {
+    return \`Hello, \${name}!\`;
+}
+console.log(greet('World'));
+\`\`\`
+
+### Lists
+1. First item
+2. Second item
+3. Third item
+
+- Bullet point
+- Another bullet
+  - Nested bullet
+
+### Blockquote
+> "The best way to predict the future is to invent it." - Alan Kay
+
+### Table
+| Feature | Status |
+|---------|--------|
+| Preview | ✅ |
+| Export  | ✅ |
+| Syntax  | ✅ |
+
+### Links
+[Visit GitHub](https://github.com)
+
+---
+
+**Try it out!** Start typing your own markdown above.
+`;
+            markdownInput.value = sample;
+            updatePreview();
+        }
+
+        markdownInput.addEventListener('input', updatePreview);
+        exportBtn.addEventListener('click', exportHTML);
+        clearBtn.addEventListener('click', () => {
+            markdownInput.value = '';
+            updatePreview();
+        });
+        sampleBtn.addEventListener('click', loadSample);
+
+        // Load sample on start
+        loadSample();
+    </script>
+</body>
+</html>
