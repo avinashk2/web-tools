@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Formatter - Web Tools</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .json-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .json-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-light);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .indent-select {
+            padding: 0.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .status-message {
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            font-weight: 600;
+        }
+
+        .status-error {
+            background-color: #fff5f5;
+            color: var(--danger);
+            border: 1px solid #feb2b2;
+        }
+
+        .status-success {
+            background-color: #f0fff4;
+            color: var(--success);
+            border: 1px solid #9ae6b4;
+        }
+
+        .json-editor-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .json-editor-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .editor-label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        textarea {
+            height: 450px;
+            font-size: 14px;
+            tab-size: 4;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">Web Tools</a>
+            <div class="nav-links">
+                <a href="diff-checker.html">Diff Checker</a>
+                <a href="password-generator.html">Password Gen</a>
+                <a href="typing-test.html">Typing Test</a>
+                <a href="markdown-preview.html">Markdown</a>
+                <a href="json-formatter.html" style="color: var(--primary);">JSON Formatter</a>
+                <a href="movie-database.html">Movies/Books</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>JSON Formatter</h1>
+            <p>Clean, format, and validate your JSON data</p>
+        </div>
+
+        <div class="card">
+            <div class="json-controls">
+                <div class="form-group mb-0">
+                    <label for="indent-size" style="display: inline; margin-right: 0.5rem;">Indentation:</label>
+                    <select id="indent-size" class="indent-select" style="width: auto;">
+                        <option value="2">2 Spaces</option>
+                        <option value="4" selected>4 Spaces</option>
+                        <option value="tab">Tabs</option>
+                    </select>
+                </div>
+                <button id="format-btn" class="btn btn-primary">Format JSON</button>
+                <button id="minify-btn" class="btn btn-secondary">Minify JSON</button>
+                <button id="sample-btn" class="btn btn-secondary">Load Sample</button>
+                <button id="clear-btn" class="btn btn-danger">Clear</button>
+                <button id="copy-btn" class="btn btn-success">Copy Result</button>
+            </div>
+
+            <div id="status-display" class="status-message hidden"></div>
+
+            <div class="json-editor-container mt-3">
+                <div class="editor-pane">
+                    <label class="editor-label" for="json-input">Input JSON:</label>
+                    <textarea id="json-input" placeholder="Paste your JSON here..."></textarea>
+                </div>
+                <div class="editor-pane">
+                    <label class="editor-label" for="json-output">Formatted Result:</label>
+                    <textarea id="json-output" readonly placeholder="Result will appear here..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Built with HTML, CSS, and JavaScript | Hosted on GitHub Pages</p>
+    </footer>
+
+    <script>
+        const jsonInput = document.getElementById('json-input');
+        const jsonOutput = document.getElementById('json-output');
+        const indentSize = document.getElementById('indent-size');
+        const formatBtn = document.getElementById('format-btn');
+        const minifyBtn = document.getElementById('minify-btn');
+        const sampleBtn = document.getElementById('sample-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const copyBtn = document.getElementById('copy-btn');
+        const statusDisplay = document.getElementById('status-display');
+
+        function showStatus(message, isError = false) {
+            statusDisplay.textContent = message;
+            statusDisplay.className = `status-message ${isError ? 'status-error' : 'status-success'}`;
+            statusDisplay.classList.remove('hidden');
+        }
+
+        function hideStatus() {
+            statusDisplay.classList.add('hidden');
+        }
+
+        function processJSON(minify = false) {
+            const input = jsonInput.value.trim();
+            if (!input) {
+                showStatus('Please enter some JSON data', true);
+                return;
+            }
+
+            try {
+                const parsed = JSON.parse(input);
+                let formatted;
+                
+                if (minify) {
+                    formatted = JSON.stringify(parsed);
+                    showStatus('JSON minified successfully!');
+                } else {
+                    const indent = indentSize.value === 'tab' ? '	' : parseInt(indentSize.value);
+                    formatted = JSON.stringify(parsed, null, indent);
+                    showStatus('JSON formatted successfully!');
+                }
+                
+                jsonOutput.value = formatted;
+            } catch (e) {
+                showStatus('Invalid JSON: ' + e.message, true);
+                jsonOutput.value = '';
+            }
+        }
+
+        formatBtn.addEventListener('click', () => processJSON(false));
+        minifyBtn.addEventListener('click', () => processJSON(true));
+
+        sampleBtn.addEventListener('click', () => {
+            const sample = {
+                "project": "Web Tools",
+                "version": "1.0.0",
+                "author": "Developer",
+                "tools": [
+                    "Diff Checker",
+                    "Password Generator",
+                    "JSON Formatter",
+                    "Markdown Preview"
+                ],
+                "active": true,
+                "settings": {
+                    "theme": "light",
+                    "notifications": false
+                }
+            };
+            jsonInput.value = JSON.stringify(sample, null, 4);
+            processJSON(false);
+        });
+
+        clearBtn.addEventListener('click', () => {
+            jsonInput.value = '';
+            jsonOutput.value = '';
+            hideStatus();
+        });
+
+        copyBtn.addEventListener('click', async () => {
+            const output = jsonOutput.value;
+            if (!output) {
+                showStatus('Nothing to copy!', true);
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(output);
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                }, 2000);
+            } catch (err) {
+                showStatus('Failed to copy to clipboard', true);
+            }
+        });
+
+        // Allow Tab key in textarea
+        jsonInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                this.value = this.value.substring(0, start) + "	" + this.value.substring(end);
+                this.selectionStart = this.selectionEnd = start + 1;
+            }
+        });
+    </script>
+</body>
+</html>
